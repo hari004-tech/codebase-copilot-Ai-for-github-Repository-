@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard – Codebase Copilot</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-page">
+
+    <!-- Top Navigation Bar -->
+    <header class="dash-header">
+        <div class="dash-nav-left">
+            <a href="/" class="dash-logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">CODEBASE <strong>COPILOT</strong></span>
+            </a>
+            <div class="repo-badge-box">
+                <span class="repo-icon">📦</span>
+                <span id="repo-title-header" class="repo-name-text">Loading...</span>
+                <span id="repo-type-tag" class="tech-tag">Repository</span>
+            </div>
+        </div>
+        <div class="dash-nav-right">
+            <a href="/download-project" class="btn btn-outline-sm" style="color:#93c5fd; border-color:rgba(59, 130, 246, 0.4);">
+                ⬇️ Download Project (.zip)
+            </a>
+            <a href="/download-bundle" class="btn btn-outline-sm">
+                📦 Single File (.py)
+            </a>
+            <button class="btn btn-outline-sm" onclick="exportMarkdownDoc()">
+                ⬇️ Export README.md
+            </button>
+            <button class="btn btn-outline-sm" onclick="exportJsonReport()">
+                📄 Export JSON Audit
+            </button>
+            <a href="/" class="btn btn-primary-sm">
+                🔍 New Analysis
+            </a>
+        </div>
+    </header>
+
+    <div class="dash-layout">
+        <!-- Sidebar Navigation Tabs -->
+        <aside class="dash-sidebar">
+            <div class="sidebar-menu">
+                <button class="menu-item active" onclick="switchTab('tab-overview', this)">
+                    <span class="menu-icon">📊</span>
+                    <span class="menu-label">Overview & Metrics</span>
+                </button>
+                <button class="menu-item" onclick="switchTab('tab-repo', this)">
+                    <span class="menu-icon">📁</span>
+                    <span class="menu-label">Repository & Tree</span>
+                </button>
+                <button class="menu-item" onclick="switchTab('tab-understanding', this)">
+                    <span class="menu-icon">🧠</span>
+                    <span class="menu-label">Code Understanding</span>
+                </button>
+                <button class="menu-item" onclick="switchTab('tab-bugs', this)">
+                    <span class="menu-icon">🐛</span>
+                    <span class="menu-label">Bug Detection</span>
+                    <span id="bug-count-badge" class="nav-badge red">0</span>
+                </button>
+                <button class="menu-item" onclick="switchTab('tab-review', this)">
+                    <span class="menu-icon">🔍</span>
+                    <span class="menu-label">Code Review & Smells</span>
+                    <span id="review-grade-badge" class="nav-badge green">A</span>
+                </button>
+                <button class="menu-item" onclick="switchTab('tab-docs', this)">
+                    <span class="menu-icon">📖</span>
+                    <span class="menu-label">Generated Docs</span>
+                </button>
+                <button class="menu-item" onclick="switchTab('tab-improvements', this)">
+                    <span class="menu-icon">⚡</span>
+                    <span class="menu-label">Improvements</span>
+                    <span id="imp-count-badge" class="nav-badge blue">0</span>
+                </button>
+            </div>
+
+            <!-- Repository Quick Summary in Sidebar -->
+            <div class="sidebar-card">
+                <h4>Health Rating</h4>
+                <div class="grade-meter-container">
+                    <div id="grade-display" class="grade-circle">A</div>
+                    <div class="grade-meta">
+                        <div id="quality-score-text" class="score-num">-- / 100</div>
+                        <div id="maintainability-text" class="score-sub">Maintainability</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="dash-main">
+
+            <!-- Top Metric Counters Grid -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon blue">📁</div>
+                    <div class="metric-info">
+                        <span class="metric-value" id="stat-files">0</span>
+                        <span class="metric-title">Total Files</span>
+                    </div>
+                    <span class="metric-sub" id="stat-folders">0 Folders</span>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon green">📝</div>
+                    <div class="metric-info">
+                        <span class="metric-value" id="stat-loc">0</span>
+                        <span class="metric-title">Lines of Code</span>
+                    </div>
+                    <span class="metric-sub" id="stat-sloc">0 Code Lines</span>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon red">🐛</div>
+                    <div class="metric-info">
+                        <span class="metric-value" id="stat-issues">0</span>
+                        <span class="metric-title">Issues Found</span>
+                    </div>
+                    <span class="metric-sub" id="stat-critical-count">0 Critical</span>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon purple">🧩</div>
+                    <div class="metric-info">
+                        <span class="metric-value" id="stat-functions">0</span>
+                        <span class="metric-title">Functions & Classes</span>
+                    </div>
+                    <span class="metric-sub" id="stat-doc-coverage">0% Documented</span>
+                </div>
+            </div>
+
+            <!-- 3 CHARTS SECTION -->
+            <div class="charts-row">
+                <!-- Chart 1: Connected Line Graph (LOC by File) -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>📈 Connected Line Graph: Code Volume by Top Files</h3>
+                        <span class="chart-tag">Distribution</span>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="lineChartLOC"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Bug Severity Pie/Doughnut Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>🎯 Bug Severity Breakdown</h3>
+                        <span class="chart-tag">Security & Bugs</span>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="pieChartBugs"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 3: File Type / Language Bar Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>📊 Language & File Type Distribution</h3>
+                        <span class="chart-tag">Composition</span>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="barChartLanguages"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 1: OVERVIEW & METRICS ================= -->
+            <section id="tab-overview" class="tab-pane active">
+                <div class="pane-grid-2">
+                    <div class="pane-card">
+                        <h3>🏗️ Architecture & Component Overview</h3>
+                        <p id="overview-arch-text" class="overview-paragraph">Analyzing architecture...</p>
+                        <div class="tag-row" id="config-markers-tags"></div>
+                    </div>
+
+                    <div class="pane-card">
+                        <h3>🏆 Top Largest Files by Line Count</h3>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>File</th>
+                                        <th>Language</th>
+                                        <th>Lines</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="largest-files-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB 2: REPOSITORY & TREE ================= -->
+            <section id="tab-repo" class="tab-pane">
+                <div class="pane-header-actions">
+                    <h2>📁 Repository Directory Tree & File Inventory</h2>
+                    <input type="text" id="file-search-input" placeholder="Search files by path or name..." oninput="filterFileList()" class="search-field">
+                </div>
+                <div class="repo-tree-layout">
+                    <div class="tree-container">
+                        <h3>File Tree Hierarchy</h3>
+                        <div id="tree-view-root" class="tree-root"></div>
+                    </div>
+                    <div class="file-table-pane">
+                        <h3>All Cataloged Files (<span id="file-catalog-count">0</span>)</h3>
+                        <div class="table-scroll-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>File Path</th>
+                                        <th>Type</th>
+                                        <th>Size</th>
+                                        <th>Lines</th>
+                                        <th>Inspect</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="all-files-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB 3: CODE UNDERSTANDING ================= -->
+            <section id="tab-understanding" class="tab-pane">
+                <div class="pane-header-actions">
+                    <h2>🧠 Code Understanding & AST Symbol Catalog</h2>
+                    <div class="filter-group">
+                        <button class="filter-pill active" onclick="filterAST('all', this)">All</button>
+                        <button class="filter-pill" onclick="filterAST('classes', this)">Classes</button>
+                        <button class="filter-pill" onclick="filterAST('functions', this)">Functions</button>
+                    </div>
+                </div>
+
+                <div class="pane-grid-2">
+                    <!-- File Summaries Column -->
+                    <div class="pane-card">
+                        <h3>Module & File Summaries</h3>
+                        <div id="file-summaries-list" class="stacked-list"></div>
+                    </div>
+
+                    <!-- Classes & Functions Column -->
+                    <div class="pane-card">
+                        <h3>Extracted Symbols & Explanations</h3>
+                        <div id="ast-symbols-list" class="stacked-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB 4: BUG DETECTION ================= -->
+            <section id="tab-bugs" class="tab-pane">
+                <div class="pane-header-actions">
+                    <div>
+                        <h2>🐛 Static Bug & Security Vulnerability Audit</h2>
+                        <p class="subtitle-text">Deterministic rule-based checks: syntax errors, SQL injection, hardcoded secrets, mutable defaults, and unsafe DOM.</p>
+                    </div>
+                    <div class="filter-group">
+                        <button class="filter-pill active" onclick="filterBugs('ALL', this)">All (<span id="filter-all-cnt">0</span>)</button>
+                        <button class="filter-pill red" onclick="filterBugs('CRITICAL', this)">Critical (<span id="filter-crit-cnt">0</span>)</button>
+                        <button class="filter-pill orange" onclick="filterBugs('HIGH', this)">High (<span id="filter-high-cnt">0</span>)</button>
+                        <button class="filter-pill amber" onclick="filterBugs('MEDIUM', this)">Medium (<span id="filter-med-cnt">0</span>)</button>
+                        <button class="filter-pill blue" onclick="filterBugs('LOW', this)">Low (<span id="filter-low-cnt">0</span>)</button>
+                    </div>
+                </div>
+
+                <div id="bugs-list-container" class="cards-list"></div>
+            </section>
+
+            <!-- ================= TAB 5: CODE REVIEW & SMELLS ================= -->
+            <section id="tab-review" class="tab-pane">
+                <div class="pane-header-actions">
+                    <h2>🔍 Automated Code Review & Maintainability Audit</h2>
+                </div>
+
+                <div class="pane-grid-2">
+                    <div class="pane-card">
+                        <h3>⚡ High Cyclomatic Complexity Hotspots</h3>
+                        <p class="subtitle-text">Functions with complexity &gt; 10 requiring conditional branching refactoring.</p>
+                        <div id="complex-functions-list" class="stacked-list"></div>
+                    </div>
+
+                    <div class="pane-card">
+                        <h3>👥 Code Duplication Detection</h3>
+                        <p class="subtitle-text">Identical code sequences repeated across files.</p>
+                        <div id="duplicate-blocks-list" class="stacked-list"></div>
+                    </div>
+                </div>
+
+                <div class="pane-card mt-20">
+                    <h3>💡 Best Practice & Clean Code Suggestions</h3>
+                    <div id="review-suggestions-list" class="cards-list"></div>
+                </div>
+            </section>
+
+            <!-- ================= TAB 6: GENERATED DOCS ================= -->
+            <section id="tab-docs" class="tab-pane">
+                <div class="pane-header-actions">
+                    <h2>📖 Generated Repository Documentation & README</h2>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-sm" onclick="copyReadmeText()">📋 Copy Markdown</button>
+                        <button class="btn btn-primary-sm" onclick="exportMarkdownDoc()">⬇️ Download README.md</button>
+                    </div>
+                </div>
+
+                <div class="doc-viewer-card">
+                    <pre id="readme-preview-content" class="doc-pre"></pre>
+                </div>
+            </section>
+
+            <!-- ================= TAB 7: CODE IMPROVEMENTS ================= -->
+            <section id="tab-improvements" class="tab-pane">
+                <div class="pane-header-actions">
+                    <h2>⚡ Concrete Code Improvements & Modernization Plans</h2>
+                    <p class="subtitle-text">Actionable Before vs After refactoring optimizations for performance, memory, and code style.</p>
+                </div>
+
+                <div id="improvements-list-container" class="cards-list"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- CODE INSPECTOR MODAL / SLIDEOUT -->
+    <div id="code-modal" class="modal-overlay hidden">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-title-box">
+                    <span class="file-icon">📄</span>
+                    <span id="modal-filename">filename.py</span>
+                    <span id="modal-filepath" class="modal-path">path/to/file.py</span>
+                </div>
+                <button class="modal-close" onclick="closeCodeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-code-lines" class="code-viewer-wrap"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

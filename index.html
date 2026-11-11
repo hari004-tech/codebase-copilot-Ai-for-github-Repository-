@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codebase Copilot – AI for GitHub Repositories</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="landing-page">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">CODEBASE <strong>COPILOT</strong></span>
+                <span class="badge-tag">AI Multi-Agent</span>
+            </div>
+            <nav class="nav-links">
+                <a href="#features">Agent Capabilities</a>
+                <a href="/download-project" class="btn btn-outline-sm" style="color:#93c5fd; border-color:rgba(59, 130, 246, 0.4);">⬇️ Download Zip</a>
+                <a href="/download-bundle" class="btn btn-outline-sm" title="Single self-extracting Python file">📦 Single File (.py)</a>
+                <button class="btn btn-outline-sm" onclick="runSampleDemo()">Try Demo Repo</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <main class="hero-section">
+        <div class="hero-content">
+            <div class="pill-badge">
+                <span class="pulse-dot"></span> 100% Free • Rule-Based Static Intelligence • Zero API Keys
+            </div>
+            <h1 class="hero-title">
+                Deep Intelligence for Any <br>
+                <span class="gradient-text">GitHub Repository</span>
+            </h1>
+            <p class="hero-subtitle">
+                Autonomous multi-agent code analysis: AST code understanding, security bug detection, 
+                code review auditing, automated README generation, and performance optimization suggestions.
+            </p>
+
+            <!-- URL Input Box -->
+            <div class="analysis-box">
+                <form id="analyze-form" onsubmit="handleAnalyzeSubmit(event)">
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔗</span>
+                        <input 
+                            type="text" 
+                            id="repo-url-input" 
+                            placeholder="Enter public GitHub URL (e.g. https://github.com/pallets/flask or pallets/flask)" 
+                            required
+                            autocomplete="off"
+                        >
+                        <button type="submit" id="analyze-btn" class="btn btn-primary">
+                            <span class="btn-text">Analyze Repository</span>
+                            <span class="btn-arrow">→</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="sample-pills">
+                    <span class="sample-label">Or try quick samples:</span>
+                    <button class="pill-btn highlight" onclick="runSampleDemo()">
+                        ✨ Built-in Demo Store (Instant)
+                    </button>
+                    <button class="pill-btn" onclick="quickFill('https://github.com/pallets/flask')">
+                        pallets/flask
+                    </button>
+                    <button class="pill-btn" onclick="quickFill('https://github.com/psf/requests')">
+                        psf/requests
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading & Progress State Overlay -->
+            <div id="loading-container" class="loading-container hidden">
+                <div class="spinner-orbit">
+                    <div class="orbit-ring"></div>
+                    <div class="orbit-core">⚡</div>
+                </div>
+                <h3 id="loading-status-title">Dispatching Analysis Agents...</h3>
+                <p id="loading-status-desc">Validating repository metadata and checking accessibility...</p>
+                
+                <div class="agent-stepper">
+                    <div class="step-item active" id="step-repo">
+                        <span class="step-bullet">1</span>
+                        <span class="step-label">Repo Scanner</span>
+                    </div>
+                    <div class="step-item" id="step-ast">
+                        <span class="step-bullet">2</span>
+                        <span class="step-label">AST Comprehension</span>
+                    </div>
+                    <div class="step-item" id="step-bugs">
+                        <span class="step-bullet">3</span>
+                        <span class="step-label">Bug & Security Agent</span>
+                    </div>
+                    <div class="step-item" id="step-review">
+                        <span class="step-bullet">4</span>
+                        <span class="step-label">Code Reviewer</span>
+                    </div>
+                    <div class="step-item" id="step-docs">
+                        <span class="step-bullet">5</span>
+                        <span class="step-label">Doc Synthesizer</span>
+                    </div>
+                    <div class="step-item" id="step-opt">
+                        <span class="step-bullet">6</span>
+                        <span class="step-label">Optimization Agent</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="error-banner" class="error-banner hidden">
+                <span class="error-icon">⚠️</span>
+                <span id="error-message">Something went wrong.</span>
+                <button class="error-dismiss" onclick="dismissError()">✕</button>
+            </div>
+        </div>
+
+        <!-- 6 Agent Feature Cards Grid -->
+        <section id="features" class="agents-grid-section">
+            <h2 class="section-heading">Powered by 6 Specialized Analysis Agents</h2>
+            <p class="section-subheading">Engineered with AST parsing, token heuristics, and deterministic static auditing.</p>
+
+            <div class="cards-grid">
+                <div class="agent-card">
+                    <div class="card-icon blue">📁</div>
+                    <h3>Repository Analysis Agent</h3>
+                    <p>Scans full folder hierarchies, catalogues lines of code (SLOC, comments, blanks), detects project configurations, and breaks down programming languages.</p>
+                </div>
+
+                <div class="agent-card">
+                    <div class="card-icon purple">🧠</div>
+                    <h3>Code Understanding Agent</h3>
+                    <p>Parses abstract syntax trees to explain function intent, extracts classes and methods, identifies dependencies, and generates human-like summaries.</p>
+                </div>
+
+                <div class="agent-card">
+                    <div class="card-icon red">🐛</div>
+                    <h3>Bug Detection Agent</h3>
+                    <p>Pins down syntax errors, SQL injections, hardcoded credentials, bare exception traps, mutable defaults, and unsafe DOM manipulations with line numbers.</p>
+                </div>
+
+                <div class="agent-card">
+                    <div class="card-icon amber">🔍</div>
+                    <h3>Code Review Agent</h3>
+                    <p>Audits cyclomatic complexity, uncovers duplicate code patterns, flags unused imports, checks docstring coverage, and computes a Maintainability Grade.</p>
+                </div>
+
+                <div class="agent-card">
+                    <div class="card-icon teal">📖</div>
+                    <h3>Documentation Agent</h3>
+                    <p>Synthesizes comprehensive README.md specifications, architectural diagrams (Mermaid flowcharts), setup guides, and module catalogs.</p>
+                </div>
+
+                <div class="agent-card">
+                    <div class="card-icon green">⚡</div>
+                    <h3>Code Improvement Agent</h3>
+                    <p>Formulates actionable Before & After refactoring suggestions: list comprehension speedups, $O(1)$ set lookups, f-string modernization, and CI/CD hygiene.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Codebase Copilot • Built for Developers • Pure Static Intelligence Engine</p>
+    </footer>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
